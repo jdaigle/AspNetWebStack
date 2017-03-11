@@ -4,18 +4,19 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Web.Mvc.Filters;
 using Microsoft.TestCommon;
+using Microsoft.Web.Mvc;
 using Moq;
 
 namespace System.Web.Mvc.Async.Test
 {
-    public class AsyncControllerActionInvokerTest
+    public class AsyncControllerActionInvoker2Test
     {
         [Fact]
         public void InvokeAction_ActionNotFound()
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ActionNotFound", null, null);
@@ -30,7 +31,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ActionThrowsExceptionAndIsHandled", null, null);
@@ -46,7 +47,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             Assert.Throws<Exception>(
@@ -59,7 +60,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             Assert.Throws<ThreadAbortException>(
@@ -71,7 +72,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "AuthenticationFilterShortCircuits", null, null);
@@ -87,7 +88,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "AuthenticationFilterChallenges", null, null);
@@ -103,7 +104,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "AuthenticationFilterShortCircuitsAndChallenges", null, null);
@@ -119,7 +120,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "AuthorizationFilterShortCircuits", null, null);
@@ -135,7 +136,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "AuthorizationFilterShortCircuitsAndChallenges", null, null);
@@ -151,7 +152,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "NormalAction", null, null);
@@ -167,7 +168,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvokerWithCustomFindAction();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2WithCustomFindAction();
 
             // Act
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, actionName: "Non-ExistantAction", callback: null, state: null);
@@ -183,7 +184,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext(passesRequestValidation: false);
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             Assert.Throws<HttpRequestValidationException>(
@@ -195,7 +196,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultThrowsExceptionAndIsHandled", null, null);
@@ -210,7 +211,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultThrowsExceptionAndIsNotHandled", null, null);
@@ -224,7 +225,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ControllerContext controllerContext = GetControllerContext();
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultCallsThreadAbort", null, null);
@@ -236,7 +237,7 @@ namespace System.Web.Mvc.Async.Test
         public void InvokeAction_ThrowsIfActionNameIsEmpty()
         {
             // Arrange
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             Assert.ThrowsArgumentNullOrEmpty(
@@ -247,7 +248,7 @@ namespace System.Web.Mvc.Async.Test
         public void InvokeAction_ThrowsIfActionNameIsNull()
         {
             // Arrange
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             Assert.ThrowsArgumentNullOrEmpty(
@@ -258,56 +259,56 @@ namespace System.Web.Mvc.Async.Test
         public void InvokeAction_ThrowsIfControllerContextIsNull()
         {
             // Arrange
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
             // Act & assert
             Assert.ThrowsArgumentNull(
                 delegate { invoker.BeginInvokeAction(null, "someAction", null, null); }, "controllerContext");
         }
 
-        [Fact]
-        public void InvokeActionMethod_AsynchronousDescriptor()
-        {
-            // Arrange
-            ControllerContext controllerContext = new ControllerContext();
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-            IAsyncResult innerAsyncResult = new MockAsyncResult();
-            ActionResult expectedResult = new ViewResult();
+        //[Fact]
+        //public void InvokeActionMethod_AsynchronousDescriptor()
+        //{
+        //    // Arrange
+        //    ControllerContext controllerContext = new ControllerContext();
+        //    Dictionary<string, object> parameters = new Dictionary<string, object>();
+        //    IAsyncResult innerAsyncResult = new MockAsyncResult();
+        //    ActionResult expectedResult = new ViewResult();
 
-            Mock<AsyncActionDescriptor> mockActionDescriptor = new Mock<AsyncActionDescriptor>();
-            mockActionDescriptor.Setup(d => d.BeginExecute(controllerContext, parameters, It.IsAny<AsyncCallback>(), It.IsAny<object>())).Returns(innerAsyncResult);
-            mockActionDescriptor.Setup(d => d.EndExecute(innerAsyncResult)).Returns(expectedResult);
+        //    Mock<AsyncActionDescriptor> mockActionDescriptor = new Mock<AsyncActionDescriptor>();
+        //    mockActionDescriptor.Setup(d => d.BeginExecute(controllerContext, parameters, It.IsAny<AsyncCallback>(), It.IsAny<object>())).Returns(innerAsyncResult);
+        //    mockActionDescriptor.Setup(d => d.EndExecute(innerAsyncResult)).Returns(expectedResult);
 
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+        //    IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
-            // Act
-            IAsyncResult asyncResult = invoker.BeginInvokeActionMethod(controllerContext, mockActionDescriptor.Object, parameters, null, null);
-            ActionResult returnedResult = invoker.EndInvokeActionMethod(asyncResult);
+        //    // Act
+        //    IAsyncResult asyncResult = invoker.BeginInvokeActionMethod(controllerContext, mockActionDescriptor.Object, parameters, null, null);
+        //    ActionResult returnedResult = invoker.EndInvokeActionMethod(asyncResult);
 
-            // Assert
-            Assert.Equal(expectedResult, returnedResult);
-        }
+        //    // Assert
+        //    Assert.Equal(expectedResult, returnedResult);
+        //}
 
-        [Fact]
-        public void InvokeActionMethod_SynchronousDescriptor()
-        {
-            // Arrange
-            ControllerContext controllerContext = new ControllerContext();
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-            ActionResult expectedResult = new ViewResult();
+        //[Fact]
+        //public void InvokeActionMethod_SynchronousDescriptor()
+        //{
+        //    // Arrange
+        //    ControllerContext controllerContext = new ControllerContext();
+        //    Dictionary<string, object> parameters = new Dictionary<string, object>();
+        //    ActionResult expectedResult = new ViewResult();
 
-            Mock<ActionDescriptor> mockActionDescriptor = new Mock<ActionDescriptor>();
-            mockActionDescriptor.Setup(d => d.Execute(controllerContext, parameters)).Returns(expectedResult);
+        //    Mock<ActionDescriptor> mockActionDescriptor = new Mock<ActionDescriptor>();
+        //    mockActionDescriptor.Setup(d => d.Execute(controllerContext, parameters)).Returns(expectedResult);
 
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+        //    IAsyncActionInvoker invoker = new AsyncControllerActionInvoker2();
 
-            // Act
-            IAsyncResult asyncResult = invoker.BeginInvokeActionMethod(controllerContext, mockActionDescriptor.Object, parameters, null, null);
-            ActionResult returnedResult = invoker.EndInvokeActionMethod(asyncResult);
+        //    // Act
+        //    IAsyncResult asyncResult = invoker.BeginInvokeActionMethod(controllerContext, mockActionDescriptor.Object, parameters, null, null);
+        //    ActionResult returnedResult = invoker.EndInvokeActionMethod(asyncResult);
 
-            // Assert
-            Assert.Equal(expectedResult, returnedResult);
-        }
+        //    // Assert
+        //    Assert.Equal(expectedResult, returnedResult);
+        //}
 
         [Fact]
         public void BeginInvokeActionMethodWithFilters_BeginExecuteThrowsOnActionExecutingException_Handled()
@@ -774,7 +775,7 @@ namespace System.Web.Mvc.Async.Test
 
         private ActionResult BeingInvokeActionMethodWithFiltersTester(Func<IAsyncResult> beginFunction, Func<ActionResult> endFunction, bool checkBegin, bool checkEnd, IActionFilter[] filters)
         {
-            AsyncControllerActionInvoker invoker = new AsyncControllerActionInvoker();
+            AsyncControllerActionInvoker2 invoker = new AsyncControllerActionInvoker2();
             ControllerContext controllerContext = new ControllerContext();
             Dictionary<string, object> parameters = new Dictionary<string, object>();
             Mock<AsyncActionDescriptor> mockActionDescriptor = new Mock<AsyncActionDescriptor>();
@@ -794,10 +795,12 @@ namespace System.Web.Mvc.Async.Test
             mockActionDescriptor.Setup(d => d.BeginExecute(controllerContext, parameters, It.IsAny<AsyncCallback>(), It.IsAny<object>())).Returns(beingExecute);
             mockActionDescriptor.Setup(d => d.EndExecute(It.IsAny<IAsyncResult>())).Returns(endExecute);
 
-            IAsyncResult outerAsyncResult = null;
+            ActionExecutedContext postContext = null;
+            //IAsyncResult outerAsyncResult = null;
             try
             {
-                outerAsyncResult = invoker.BeginInvokeActionMethodWithFilters(controllerContext, filters, mockActionDescriptor.Object, parameters, null, null);
+                postContext = invoker.InvokeActionMethodWithFiltersAsync(controllerContext, filters, mockActionDescriptor.Object, parameters).GetAwaiter().GetResult();
+                //outerAsyncResult = invoker.BeginInvokeActionMethodWithFilters(controllerContext, filters, mockActionDescriptor.Object, parameters, null, null);
             }
             catch (Exception ex)
             {
@@ -812,11 +815,11 @@ namespace System.Web.Mvc.Async.Test
                 }
             }
 
-            Assert.NotNull(outerAsyncResult);
+            //Assert.NotNull(outerAsyncResult);
             Assert.Equal(checkBegin, beginExecuteCalled);
             Assert.False(endExecuteCalled);
 
-            ActionExecutedContext postContext = invoker.EndInvokeActionMethodWithFilters(outerAsyncResult);
+            //ActionExecutedContext postContext = invoker.EndInvokeActionMethodWithFilters(outerAsyncResult);
 
             Assert.NotNull(postContext);
             if (checkEnd)
@@ -895,9 +898,9 @@ namespace System.Web.Mvc.Async.Test
             }
         }
 
-        public class AsyncControllerActionInvokerHelper : AsyncControllerActionInvoker
+        public class AsyncControllerActionInvoker2Helper : AsyncControllerActionInvoker2
         {
-            public AsyncControllerActionInvokerHelper()
+            public AsyncControllerActionInvoker2Helper()
             {
                 DescriptorCache = new ControllerDescriptorCache();
             }
@@ -993,7 +996,7 @@ namespace System.Web.Mvc.Async.Test
             }
         }
 
-        public class AsyncControllerActionInvokerWithCustomFindAction : AsyncControllerActionInvoker
+        public class AsyncControllerActionInvoker2WithCustomFindAction : AsyncControllerActionInvoker2
         {
             protected override ActionDescriptor FindAction(ControllerContext controllerContext, ControllerDescriptor controllerDescriptor, string actionName)
             {
