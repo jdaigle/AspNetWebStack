@@ -268,7 +268,7 @@ namespace System.Web.Mvc.Async
             }
         }
 
-        IAsyncResult IAsyncActionInvoker.BeginInvokeAction(ControllerContext controllerContext, string actionName, AsyncCallback callback, object state)
+        public IAsyncResult BeginInvokeAction(ControllerContext controllerContext, string actionName, AsyncCallback callback, object state)
         {
             var task = InvokeActionAsync(controllerContext, actionName);
 
@@ -321,7 +321,7 @@ namespace System.Web.Mvc.Async
             return result;
         }
 
-        bool IAsyncActionInvoker.EndInvokeAction(IAsyncResult asyncResult)
+        public bool EndInvokeAction(IAsyncResult asyncResult)
         {
             var wrapperResult = (TaskWrapperAsyncResult)asyncResult;
 
