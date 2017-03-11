@@ -10,9 +10,9 @@ using System.Web.Mvc.Async;
 using System.Web.Mvc.Filters;
 using System.Web.Mvc.Routing;
 
-namespace Microsoft.Web.Mvc
+namespace System.Web.Mvc.Async
 {
-    public class AsyncControllerActionInvoker2 : ControllerActionInvoker, IAsyncActionInvoker
+    public class AsyncControllerActionInvokerNew : ControllerActionInvoker, IAsyncActionInvoker
     {
         public Task<bool> InvokeActionAsync(ControllerContext controllerContext, string actionName)
         {
@@ -171,7 +171,7 @@ namespace Microsoft.Web.Mvc
         // Large and passed to many function calls, so keep as a reference type to minimize copying
         private class AsyncInvocationWithFilters
         {
-            private readonly AsyncControllerActionInvoker2 _invoker;
+            private readonly AsyncControllerActionInvokerNew _invoker;
             private readonly ControllerContext _controllerContext;
             private readonly ActionDescriptor _actionDescriptor;
             private readonly IList<IActionFilter> _filters;
@@ -179,7 +179,7 @@ namespace Microsoft.Web.Mvc
             private readonly int _filterCount;
             private readonly ActionExecutingContext _preContext;
 
-            internal AsyncInvocationWithFilters(AsyncControllerActionInvoker2 invoker, ControllerContext controllerContext, ActionDescriptor actionDescriptor, IList<IActionFilter> filters, IDictionary<string, object> parameters)
+            internal AsyncInvocationWithFilters(AsyncControllerActionInvokerNew invoker, ControllerContext controllerContext, ActionDescriptor actionDescriptor, IList<IActionFilter> filters, IDictionary<string, object> parameters)
             {
                 Contract.Assert(invoker != null);
                 Contract.Assert(controllerContext != null);

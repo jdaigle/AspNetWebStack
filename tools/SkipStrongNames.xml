@@ -20,8 +20,7 @@
   <assembly name="System.Web.Http.SignalR"/>
   <assembly name="System.Web.Http.Tracing"/>
   <assembly name="System.Web.Http.WebHost"/>
-    <assembly name="System.Web.Mvc"/>
-    <assembly name="Microsoft.Web.Mvc.Contrib"/>
+  <assembly name="System.Web.Mvc"/>
   <assembly name="System.Web.OData"/>
   <assembly name="System.Web.Razor"/>
   <assembly name="System.Web.WebPages"/>

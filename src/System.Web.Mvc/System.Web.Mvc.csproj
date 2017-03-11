@@ -322,6 +322,7 @@
     <Compile Include="Async\AsyncActionDescriptor.cs" />
     <Compile Include="Async\AsyncActionMethodSelector.cs" />
     <Compile Include="Async\AsyncControllerActionInvoker.cs" />
+    <Compile Include="Async\AsyncControllerActionInvokerLegacy.cs" />
     <Compile Include="Async\SynchronousOperationException.cs" />
     <Compile Include="Async\AsyncManager.cs" />
     <Compile Include="AsyncTimeoutAttribute.cs" />
