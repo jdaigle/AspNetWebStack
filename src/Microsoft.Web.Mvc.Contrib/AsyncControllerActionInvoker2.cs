@@ -71,7 +71,16 @@ namespace Microsoft.Web.Mvc
                     ValidateRequest(controllerContext);
                 }
 
-                await InvokeActionMethodWithFiltersAsync(controllerContext, filterInfo, actionDescriptor);
+                IDictionary<string, object> parameters = GetParameterValues(controllerContext, actionDescriptor);
+                var postActionContext = await InvokeActionMethodWithFiltersAsync(controllerContext, filterInfo.ActionFilters, actionDescriptor, parameters).ConfigureAwait(false);
+
+                // The action succeeded. Let all authentication filters contribute to an action
+                // result (to combine authentication challenges; some authentication filters need
+                // to do negotiation even on a successful result). Then, run this action result.
+                AuthenticationChallengeContext postChallengeContext
+                    = InvokeAuthenticationFiltersChallenge(controllerContext, filterInfo.AuthenticationFilters, actionDescriptor, postActionContext.Result);
+
+                InvokeActionResultWithFilters(controllerContext, filterInfo.ResultFilters, postChallengeContext.Result ?? postActionContext.Result);
             }
             catch (ThreadAbortException)
             {
@@ -94,25 +103,15 @@ namespace Microsoft.Web.Mvc
         }
 
 
-        private async Task InvokeActionMethodWithFiltersAsync(ControllerContext controllerContext, FilterInfo filterInfo, ActionDescriptor actionDescriptor)
+        public Task<ActionExecutedContext> InvokeActionMethodWithFiltersAsync(ControllerContext controllerContext, IList<IActionFilter> filters, ActionDescriptor actionDescriptor, IDictionary<string, object> parameters)
         {
-            IDictionary<string, object> parameters = GetParameterValues(controllerContext, actionDescriptor);
-
-            AsyncInvocationWithFilters invocation = new AsyncInvocationWithFilters(this, controllerContext, actionDescriptor, filterInfo.ActionFilters, parameters);
+            AsyncInvocationWithFilters invocation = new AsyncInvocationWithFilters(this, controllerContext, actionDescriptor, filters, parameters);
 
             const int StartingFilterIndex = 0;
-            ActionExecutedContext postActionContext = await invocation.InvokeActionMethodFilterAsynchronouslyRecursive(StartingFilterIndex).ConfigureAwait(false);
-
-            // The action succeeded. Let all authentication filters contribute to an action
-            // result (to combine authentication challenges; some authentication filters need
-            // to do negotiation even on a successful result). Then, run this action result.
-            AuthenticationChallengeContext challengeContext
-                = InvokeAuthenticationFiltersChallenge(controllerContext, filterInfo.AuthenticationFilters, actionDescriptor, postActionContext.Result);
-
-            InvokeActionResultWithFilters(controllerContext, filterInfo.ResultFilters, challengeContext.Result ?? postActionContext.Result);
+            return invocation.InvokeActionMethodFilterAsynchronouslyRecursive(StartingFilterIndex);
         }
 
-        protected internal virtual Task<ActionResult> InvokeActionMethodAsync(ControllerContext controllerContext, ActionDescriptor actionDescriptor, IDictionary<string, object> parameters)
+        public virtual Task<ActionResult> InvokeActionMethodAsync(ControllerContext controllerContext, ActionDescriptor actionDescriptor, IDictionary<string, object> parameters)
         {
             AsyncActionDescriptor asyncActionDescriptor = actionDescriptor as AsyncActionDescriptor;
             if (asyncActionDescriptor != null)
