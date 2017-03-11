@@ -304,6 +304,19 @@ namespace System.Web.Mvc.Async
                     });
                 }
             }
+            else
+            {
+                if (task.IsCompleted)
+                {
+                    // If the underlying task is already finished, from our caller's perspective this is just
+                    // a synchronous completion.
+                    result.CompletedSynchronously = true;
+                    if (task.IsFaulted)
+                    {
+                        task.ThrowIfFaulted();
+                    }
+                }
+            }
 
             return result;
         }
