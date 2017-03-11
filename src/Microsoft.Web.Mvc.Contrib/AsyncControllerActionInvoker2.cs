@@ -14,7 +14,7 @@ namespace Microsoft.Web.Mvc
 {
     public class AsyncControllerActionInvoker2 : ControllerActionInvoker, IAsyncActionInvoker
     {
-        public async Task<bool> InvokeActionAsync(ControllerContext controllerContext, string actionName)
+        public Task<bool> InvokeActionAsync(ControllerContext controllerContext, string actionName)
         {
             if (controllerContext == null)
             {
@@ -31,7 +31,7 @@ namespace Microsoft.Web.Mvc
             ActionDescriptor actionDescriptor = FindAction(controllerContext, controllerDescriptor, actionName);
             if (actionDescriptor == null)
             {
-                return false;
+                return Task.FromResult(false);
             }
 
             FilterInfo filterInfo = GetFilters(controllerContext, actionDescriptor);
@@ -49,7 +49,7 @@ namespace Microsoft.Web.Mvc
                         InvokeAuthenticationFiltersChallenge(controllerContext, filterInfo.AuthenticationFilters, actionDescriptor, authenticationContext.Result);
 
                     InvokeActionResult(controllerContext, challengeContext.Result ?? authenticationContext.Result);
-                    return true;
+                    return Task.FromResult(true);
                 }
 
                 AuthorizationContext authorizationContext
@@ -63,7 +63,7 @@ namespace Microsoft.Web.Mvc
                         InvokeAuthenticationFiltersChallenge(controllerContext,
                         filterInfo.AuthenticationFilters, actionDescriptor, authorizationContext.Result);
                     InvokeActionResult(controllerContext, challengeContext.Result ?? authorizationContext.Result);
-                    return true;
+                    return Task.FromResult(true);
                 }
 
                 if (controllerContext.Controller.ValidateRequest)
@@ -72,6 +72,43 @@ namespace Microsoft.Web.Mvc
                 }
 
                 IDictionary<string, object> parameters = GetParameterValues(controllerContext, actionDescriptor);
+                return InvokeInvokeActionMethodWithFiltersAsync(controllerContext, filterInfo, actionDescriptor, parameters);
+            }
+            catch (ThreadAbortException)
+            {
+                // This type of exception occurs as a result of Response.Redirect(), but we special-case so that
+                // the filters don't see this as an error.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // something blew up, so execute the exception filters
+                ExceptionContext exceptionContext = InvokeExceptionFilters(controllerContext, filterInfo.ExceptionFilters, ex);
+                if (!exceptionContext.ExceptionHandled)
+                {
+                    throw;
+                }
+                InvokeActionResult(controllerContext, exceptionContext.Result);
+            }
+
+            return Task.FromResult(true);
+        }
+
+        protected override ControllerDescriptor GetControllerDescriptor(ControllerContext controllerContext)
+        {
+            // Frequently called, so ensure delegate is static
+            Type controllerType = controllerContext.Controller.GetType();
+            ControllerDescriptor controllerDescriptor = DescriptorCache.GetDescriptor(
+                controllerType: controllerType,
+                creator: ReflectedAsyncControllerDescriptor.DefaultDescriptorFactory,
+                state: controllerType);
+            return controllerDescriptor;
+        }
+
+        public async Task<bool> InvokeInvokeActionMethodWithFiltersAsync(ControllerContext controllerContext, FilterInfo filterInfo, ActionDescriptor actionDescriptor, IDictionary<string, object> parameters)
+        {
+            try
+            {
                 var postActionContext = await InvokeActionMethodWithFiltersAsync(controllerContext, filterInfo.ActionFilters, actionDescriptor, parameters).ConfigureAwait(false);
 
                 // The action succeeded. Let all authentication filters contribute to an action
@@ -126,10 +163,7 @@ namespace Microsoft.Web.Mvc
 
         private async Task<ActionResult> InvokeAsynchronousActionMethod(ControllerContext controllerContext, AsyncActionDescriptor actionDescriptor, IDictionary<string, object> parameters)
         {
-            object returnValue = await Task.Factory
-                   .FromAsync(actionDescriptor.BeginExecute, actionDescriptor.EndExecute, controllerContext, parameters, (object)null)
-                   .ConfigureAwait(false);
-
+            object returnValue = await Task.Factory.FromAsync(actionDescriptor.BeginExecute, actionDescriptor.EndExecute, controllerContext, parameters, null).ConfigureAwait(false);
             ActionResult result = base.CreateActionResult(controllerContext, actionDescriptor, returnValue);
             return result;
         }
