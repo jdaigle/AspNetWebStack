@@ -265,58 +265,47 @@ namespace System.Web.Mvc.Async
 
         public IAsyncResult BeginInvokeAction(ControllerContext controllerContext, string actionName, AsyncCallback callback, object state)
         {
+            // See: http://blog.stephencleary.com/2012/07/async-interop-with-iasyncresult.html
+            // and: https://social.msdn.microsoft.com/Forums/en-US/9535a4a6-6218-45fe-aa45-79332b9e5b88/trampolining-considerations-for-apm-wrappers?forum=async
+            // and: https://github.com/StephenCleary/AsyncEx/blob/master/src/Nito.AsyncEx.Tasks/Interop/ApmAsyncFactory.cs
+
             var task = InvokeActionAsync(controllerContext, actionName);
+            var tcs = new TaskCompletionSource<bool>(state);
+            //TODO .NET 4.5.2 support
+            //var tcs = new TaskCompletionSource<bool>(state, TaskCreationOptions.RunContinuationsAsynchronously);
+            SynchronizationContextSwitcher.NoContext(() => CompleteAsync(task, callback, tcs));
+            return tcs.Task;
+        }
 
-            TaskWrapperAsyncResult result = null;
-
-            if (task.IsCompleted)
+        private static async void CompleteAsync(Task<bool> task, AsyncCallback callback, TaskCompletionSource<bool> tcs)
+        {
+            try
             {
-                // If the underlying task is already finished, from our caller's perspective this is just
-                // a synchronous completion.
-
-                if (task.IsFaulted)
-                {
-                    // Throw an exception with the correct call stack
-                    task.ThrowIfFaulted();
-                }
-
-                result = new TaskWrapperAsyncResult(task, state);
-                result.CompletedSynchronously = true;
-
-                // if user supplied a callback, invoke that when their task has finished running. 
-                callback?.Invoke(result);
+                tcs.TrySetResult(await task.ConfigureAwait(false));
             }
-            else
+            catch (OperationCanceledException)
             {
-                // If the underlying task isn't yet finished, from our caller's perspective this will be
-                // an asynchronous completion. We'll use ContinueWith instead of Finally for two reasons:
-                //
-                // - Finally propagates the antecedent Task's exception, which we don't need to do here.
-                //   Out caller will eventually call EndExecute, which correctly observes the
-                //   antecedent Task's exception anyway if it faulted.
-                //
-                // - Finally invokes the callback on the captured SynchronizationContext, which is
-                //   unnecessary when using APM (Begin / End). APM assumes that the callback is invoked
-                //   on an arbitrary ThreadPool thread with no SynchronizationContext set up, so
-                //   ContinueWith gets us closer to the desired semantic.
-                result = new TaskWrapperAsyncResult(task, state);
+                tcs.TrySetCanceled();
+                // TODO: .NET 4.5.2 support
+                //tcs.TrySetCanceled(ex.CancellationToken);
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+            finally
+            {
                 if (callback != null)
                 {
-                    result.CompletedSynchronously = false;
-                    task.ContinueWith(_ =>
-                    {
-                        callback(result);
-                    });
+                    callback.Invoke(tcs.Task);
                 }
             }
-
-            return result;
         }
 
         public bool EndInvokeAction(IAsyncResult asyncResult)
         {
-            var wrapperResult = (TaskWrapperAsyncResult)asyncResult;
-            return ((Task<bool>)wrapperResult.Task).GetAwaiter().GetResult();
+            // Wait and Unwrap any Exceptions
+            return ((Task<bool>)asyncResult).GetAwaiter().GetResult();
         }
     }
 }

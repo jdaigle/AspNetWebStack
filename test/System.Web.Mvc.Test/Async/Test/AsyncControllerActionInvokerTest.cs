@@ -52,7 +52,11 @@ namespace System.Web.Mvc.Async.Test
 
             // Act & assert
             Assert.Throws<Exception>(
-                delegate { invoker.BeginInvokeAction(controllerContext, "ActionThrowsExceptionAndIsNotHandled", null, null); },
+                delegate
+                {
+                    var asyncResult = invoker.BeginInvokeAction(controllerContext, "ActionThrowsExceptionAndIsNotHandled", null, null);
+                    invoker.EndInvokeAction(asyncResult);
+                },
                 @"Some exception text.");
         }
 
@@ -65,7 +69,11 @@ namespace System.Web.Mvc.Async.Test
 
             // Act & assert
             Assert.Throws<ThreadAbortException>(
-                delegate { invoker.BeginInvokeAction(controllerContext, "ActionCallsThreadAbort", null, null); });
+                delegate
+                {
+                    var asyncResult = invoker.BeginInvokeAction(controllerContext, "ActionCallsThreadAbort", null, null);
+                    invoker.EndInvokeAction(asyncResult);
+                });
         }
 
         [Fact]
@@ -215,10 +223,8 @@ namespace System.Web.Mvc.Async.Test
             AsyncControllerActionInvokerNew invoker = new AsyncControllerActionInvokerNew();
 
             // Act & assert
-            Assert.Throws<Exception>(
-                delegate {
-                    IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultThrowsExceptionAndIsNotHandled", null, null);
-                    invoker.EndInvokeAction(asyncResult); },
+            IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultThrowsExceptionAndIsNotHandled", null, null);
+            Assert.Throws<Exception>(delegate { invoker.EndInvokeAction(asyncResult); },
                 @"Some exception text.");
         }
 
@@ -230,10 +236,8 @@ namespace System.Web.Mvc.Async.Test
             AsyncControllerActionInvokerNew invoker = new AsyncControllerActionInvokerNew();
 
             // Act & assert
-            Assert.Throws<ThreadAbortException>(
-                delegate {
-                    IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultCallsThreadAbort", null, null);
-                    invoker.EndInvokeAction(asyncResult); });
+            IAsyncResult asyncResult = invoker.BeginInvokeAction(controllerContext, "ResultCallsThreadAbort", null, null);
+            Assert.Throws<ThreadAbortException>(delegate { invoker.EndInvokeAction(asyncResult); });
         }
 
         [Fact]
