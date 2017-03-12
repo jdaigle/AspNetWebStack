@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net452</TargetFramework>
+    <RootNamespace>System.Web.Mvc</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.10.3" />
+    <PackageReference Include="moq" Version="4.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\System.Web.Mvc\System.Web.Mvc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+</Project>

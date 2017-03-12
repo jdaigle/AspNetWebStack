@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Web.WebPages.Deploym
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Web.Razor.Test", "test\System.Web.Razor.Test\System.Web.Razor.Test.csproj", "{0BB62A1D-E6B5-49FA-9E3C-6AF679A66DFE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "System.Web.Mvc.Benchmark", "test\System.Web.Mvc.Benchmark\System.Web.Mvc.Benchmark.csproj", "{BD7E5E09-A5BF-407D-B32D-902ECDD90535}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CodeAnalysis|Any CPU = CodeAnalysis|Any CPU
@@ -94,6 +96,12 @@ Global
 		{0BB62A1D-E6B5-49FA-9E3C-6AF679A66DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BB62A1D-E6B5-49FA-9E3C-6AF679A66DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BB62A1D-E6B5-49FA-9E3C-6AF679A66DFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535}.CodeAnalysis|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535}.CodeAnalysis|Any CPU.Build.0 = Debug|Any CPU
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,5 +117,6 @@ Global
 		{0939B11A-FE4E-4BA1-8AD6-D97741EE314F} = {E5C8144E-486E-443E-8599-9026F4210BC6}
 		{22BABB60-8F02-4027-AFFC-ACF069954536} = {E5C8144E-486E-443E-8599-9026F4210BC6}
 		{0BB62A1D-E6B5-49FA-9E3C-6AF679A66DFE} = {66A2B787-F307-480D-B49D-9EF78561FF53}
+		{BD7E5E09-A5BF-407D-B32D-902ECDD90535} = {66A2B787-F307-480D-B49D-9EF78561FF53}
 	EndGlobalSection
 EndGlobal
