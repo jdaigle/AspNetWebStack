@@ -155,7 +155,9 @@
     <Compile Include="ActionMethodSelectorBase.cs" />
     <Compile Include="ActionNameSelector.cs" />
     <Compile Include="AreaReference.cs" />
+    <Compile Include="Async\AsyncActionDescriptorNew.cs" />
     <Compile Include="Async\AsyncControllerActionInvokerNew.cs" />
+    <Compile Include="Async\TaskAsyncActionDescriptorNew.cs" />
     <Compile Include="ControllerDescriptorExtensions.cs" />
     <Compile Include="Async\IAsyncActionInvokerFactory.cs" />
     <Compile Include="CopyOnWriteDictionary.cs" />

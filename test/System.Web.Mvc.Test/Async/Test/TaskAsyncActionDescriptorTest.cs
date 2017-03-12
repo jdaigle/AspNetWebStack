@@ -22,7 +22,7 @@ namespace System.Web.Mvc.Async.Test
             ControllerDescriptor cd = new Mock<ControllerDescriptor>().Object;
 
             // Act
-            TaskAsyncActionDescriptor ad = new TaskAsyncActionDescriptor(_taskMethod, actionName, cd);
+            TaskAsyncActionDescriptorNew ad = new TaskAsyncActionDescriptorNew(_taskMethod, actionName, cd);
 
             // Assert
             Assert.Equal(_taskMethod, ad.TaskMethodInfo);
@@ -38,7 +38,7 @@ namespace System.Web.Mvc.Async.Test
 
             // Act & assert
             Assert.ThrowsArgumentNullOrEmpty(
-                delegate { new TaskAsyncActionDescriptor(_taskMethod, "", cd); }, "actionName");
+                delegate { new TaskAsyncActionDescriptorNew(_taskMethod, "", cd); }, "actionName");
         }
 
         [Fact]
@@ -49,7 +49,7 @@ namespace System.Web.Mvc.Async.Test
 
             // Act & assert
             Assert.ThrowsArgumentNullOrEmpty(
-                delegate { new TaskAsyncActionDescriptor(_taskMethod, null, cd); }, "actionName");
+                delegate { new TaskAsyncActionDescriptorNew(_taskMethod, null, cd); }, "actionName");
         }
 
         [Fact]
@@ -61,7 +61,7 @@ namespace System.Web.Mvc.Async.Test
 
             // Act & assert
             Assert.Throws<ArgumentException>(
-                delegate { new TaskAsyncActionDescriptor(getHashCodeMethod, "SomeAction", cd); },
+                delegate { new TaskAsyncActionDescriptorNew(getHashCodeMethod, "SomeAction", cd); },
                 "Cannot create a descriptor for instance method 'Int32 GetHashCode()' on type 'System.Object' because the type does not derive from ControllerBase." + Environment.NewLine
               + "Parameter name: taskMethodInfo");
         }
@@ -74,7 +74,7 @@ namespace System.Web.Mvc.Async.Test
 
             // Act & assert
             Assert.ThrowsArgumentNull(
-                delegate { new TaskAsyncActionDescriptor(null, "SomeAction", cd); }, "taskMethodInfo");
+                delegate { new TaskAsyncActionDescriptorNew(null, "SomeAction", cd); }, "taskMethodInfo");
         }
 
         [Fact]
@@ -82,14 +82,14 @@ namespace System.Web.Mvc.Async.Test
         {
             // Act & assert
             Assert.ThrowsArgumentNull(
-                delegate { new TaskAsyncActionDescriptor(_taskMethod, "SomeAction", null); }, "controllerDescriptor");
+                delegate { new TaskAsyncActionDescriptorNew(_taskMethod, "SomeAction", null); }, "controllerDescriptor");
         }
 
         [Fact]
         public void ExecuteTask()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTask"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTask"));
 
             Dictionary<string, object> parameters = new Dictionary<string, object>()
             {
@@ -110,7 +110,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskGeneric()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("GenericTask"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("GenericTask"));
 
             Dictionary<string, object> parameters = new Dictionary<string, object>()
             {
@@ -128,7 +128,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskPreservesStackTraceOnException()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTaskException"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTaskException"));
 
             Dictionary<string, object> parameters = new Dictionary<string, object>()
             {
@@ -151,7 +151,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskGenericPreservesStackTraceOnException()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("GenericTaskException"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("GenericTaskException"));
 
             Dictionary<string, object> parameters = new Dictionary<string, object>()
             {
@@ -175,7 +175,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskOfPrivateT()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskOfPrivateT"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskOfPrivateT"));
             ControllerContext controllerContext = GetControllerContext();
 
             Dictionary<string, object> parameters = new Dictionary<string, object>();
@@ -192,7 +192,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskPreservesState()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTask"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTask"));
 
             Dictionary<string, object> parameters = new Dictionary<string, object>()
             {
@@ -202,7 +202,7 @@ namespace System.Web.Mvc.Async.Test
             ControllerContext controllerContext = GetControllerContext();
 
             // Act
-            TaskWrapperAsyncResult result = (TaskWrapperAsyncResult)actionDescriptor.BeginExecute(GetControllerContext(), parameters, callback: null, state: "state");
+            Task result = (Task)actionDescriptor.BeginExecute(GetControllerContext(), parameters, callback: null, state: "state");
 
             // Assert
             Assert.Equal("state", result.AsyncState);
@@ -212,7 +212,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskWithNullParameterAndTimeout()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskTimeoutWithNullParam"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskTimeoutWithNullParam"));
 
             Dictionary<string, object> token = new Dictionary<string, object>()
             {
@@ -231,7 +231,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteWithInfiniteTimeout()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskWithInfiniteTimeout"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskWithInfiniteTimeout"));
             ControllerContext controllerContext = GetControllerContext(Timeout.Infinite);
 
             Dictionary<string, object> parameters = new Dictionary<string, object>()
@@ -250,7 +250,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskWithImmediateTimeout()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskTimeout"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskTimeout"));
 
             Dictionary<string, object> token = new Dictionary<string, object>()
             {
@@ -268,7 +268,7 @@ namespace System.Web.Mvc.Async.Test
         public void ExecuteTaskWithTimeout()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskTimeout"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("TaskTimeout"));
 
             Dictionary<string, object> token = new Dictionary<string, object>()
             {
@@ -286,7 +286,7 @@ namespace System.Web.Mvc.Async.Test
         public void SynchronousExecuteThrows()
         {
             // Arrange
-            TaskAsyncActionDescriptor actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTask"));
+            TaskAsyncActionDescriptorNew actionDescriptor = GetActionDescriptor(GetExecuteControllerMethodInfo("SimpleTask"));
 
             // Act & assert
             Assert.Throws<InvalidOperationException>(
@@ -297,7 +297,7 @@ namespace System.Web.Mvc.Async.Test
         public void Execute_ThrowsIfControllerContextIsNull()
         {
             // Arrange
-            TaskAsyncActionDescriptor ad = GetActionDescriptor(_taskMethod);
+            TaskAsyncActionDescriptorNew ad = GetActionDescriptor(_taskMethod);
 
             // Act & assert
             Assert.ThrowsArgumentNull(
@@ -308,7 +308,7 @@ namespace System.Web.Mvc.Async.Test
         public void Execute_ThrowsIfControllerIsNotAsyncManagerContainer()
         {
             // Arrange
-            TaskAsyncActionDescriptor ad = GetActionDescriptor(_taskMethod);
+            TaskAsyncActionDescriptorNew ad = GetActionDescriptor(_taskMethod);
             ControllerContext controllerContext = new ControllerContext()
             {
                 Controller = new RegularSyncController()
@@ -329,7 +329,7 @@ namespace System.Web.Mvc.Async.Test
         public void Execute_ThrowsIfParametersIsNull()
         {
             // Arrange
-            TaskAsyncActionDescriptor ad = GetActionDescriptor(_taskMethod);
+            TaskAsyncActionDescriptorNew ad = GetActionDescriptor(_taskMethod);
 
             // Act & assert
             Assert.ThrowsArgumentNull(
@@ -343,7 +343,7 @@ namespace System.Web.Mvc.Async.Test
             object[] expected = new object[0];
             Mock<MethodInfo> mockMethod = new Mock<MethodInfo>();
             mockMethod.Setup(mi => mi.GetCustomAttributes(true)).Returns(expected);
-            TaskAsyncActionDescriptor ad = new TaskAsyncActionDescriptor(mockMethod.Object, "someName", new Mock<ControllerDescriptor>().Object, validateMethod: false)
+            TaskAsyncActionDescriptorNew ad = new TaskAsyncActionDescriptorNew(mockMethod.Object, "someName", new Mock<ControllerDescriptor>().Object, validateMethod: false)
             {
                 DispatcherCache = new ActionMethodDispatcherCache()
             };
@@ -362,7 +362,7 @@ namespace System.Web.Mvc.Async.Test
             object[] expected = new object[0];
             Mock<MethodInfo> mockMethod = new Mock<MethodInfo>();
             mockMethod.Setup(mi => mi.GetCustomAttributes(typeof(ObsoleteAttribute), true)).Returns(expected);
-            TaskAsyncActionDescriptor ad = new TaskAsyncActionDescriptor(mockMethod.Object, "someName", new Mock<ControllerDescriptor>().Object, validateMethod: false)
+            TaskAsyncActionDescriptorNew ad = new TaskAsyncActionDescriptorNew(mockMethod.Object, "someName", new Mock<ControllerDescriptor>().Object, validateMethod: false)
             {
                 DispatcherCache = new ActionMethodDispatcherCache()
             };
@@ -379,7 +379,7 @@ namespace System.Web.Mvc.Async.Test
         {
             // Arrange
             ParameterInfo pInfo = _taskMethod.GetParameters()[0];
-            TaskAsyncActionDescriptor ad = GetActionDescriptor(_taskMethod);
+            TaskAsyncActionDescriptorNew ad = GetActionDescriptor(_taskMethod);
 
             // Act
             ParameterDescriptor[] pDescsFirstCall = ad.GetParameters();
@@ -408,7 +408,7 @@ namespace System.Web.Mvc.Async.Test
             mockAttr.Setup(attr => attr.IsValidForRequest(controllerContext, mockMethod.Object)).Returns(true).Verifiable();
             mockMethod.Setup(m => m.GetCustomAttributes(typeof(ActionMethodSelectorAttribute), true)).Returns(new ActionMethodSelectorAttribute[] { mockAttr.Object });
 
-            TaskAsyncActionDescriptor ad = new TaskAsyncActionDescriptor(mockMethod.Object, "someName", new Mock<ControllerDescriptor>().Object, validateMethod: false)
+            TaskAsyncActionDescriptorNew ad = new TaskAsyncActionDescriptorNew(mockMethod.Object, "someName", new Mock<ControllerDescriptor>().Object, validateMethod: false)
             {
                 DispatcherCache = new ActionMethodDispatcherCache()
             };
@@ -427,7 +427,7 @@ namespace System.Web.Mvc.Async.Test
         public void IsDefined()
         {
             // Arrange
-            TaskAsyncActionDescriptor ad = GetActionDescriptor(_taskMethod);
+            TaskAsyncActionDescriptorNew ad = GetActionDescriptor(_taskMethod);
 
             // Act
             bool isDefined = ad.IsDefined(typeof(AuthorizeAttribute), inherit: true);
@@ -436,7 +436,7 @@ namespace System.Web.Mvc.Async.Test
             Assert.True(isDefined);
         }
 
-        public static object ExecuteHelper(TaskAsyncActionDescriptor actionDescriptor, Dictionary<string, object> parameters, ControllerContext controllerContext = null)
+        public static object ExecuteHelper(TaskAsyncActionDescriptorNew actionDescriptor, Dictionary<string, object> parameters, ControllerContext controllerContext = null)
         {
             SignalContainer<object> resultContainer = new SignalContainer<object>();
             AsyncCallback callback = ar =>
@@ -449,9 +449,9 @@ namespace System.Web.Mvc.Async.Test
             return resultContainer.Wait();
         }
 
-        private static TaskAsyncActionDescriptor GetActionDescriptor(MethodInfo taskMethod)
+        private static TaskAsyncActionDescriptorNew GetActionDescriptor(MethodInfo taskMethod)
         {
-            return new TaskAsyncActionDescriptor(taskMethod, "someName", new Mock<ControllerDescriptor>().Object)
+            return new TaskAsyncActionDescriptorNew(taskMethod, "someName", new Mock<ControllerDescriptor>().Object)
             {
                 DispatcherCache = new ActionMethodDispatcherCache()
             };

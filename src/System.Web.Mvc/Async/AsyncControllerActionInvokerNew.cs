@@ -277,6 +277,7 @@ namespace System.Web.Mvc.Async
             return tcs.Task;
         }
 
+        // `async void` is on purpose, to raise `callback` exceptions directly on the thread pool.
         private static async void CompleteAsync(Task<bool> task, AsyncCallback callback, TaskCompletionSource<bool> tcs)
         {
             try

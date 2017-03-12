@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.TestCommon;
 using Moq;
 
@@ -12,7 +13,7 @@ namespace System.Web.Mvc.Async.Test
         public void SynchronousExecuteThrows()
         {
             // Arrange
-            AsyncActionDescriptor actionDescriptor = new TestableAsyncActionDescriptor();
+            AsyncActionDescriptorNew actionDescriptor = new TestableAsyncActionDescriptor();
 
             // Act & Assert
             Assert.Throws<InvalidOperationException>(
@@ -21,7 +22,7 @@ namespace System.Web.Mvc.Async.Test
                 );
         }
 
-        private class TestableAsyncActionDescriptor : AsyncActionDescriptor
+        private class TestableAsyncActionDescriptor : AsyncActionDescriptorNew
         {
             public override string ActionName
             {
@@ -31,6 +32,11 @@ namespace System.Web.Mvc.Async.Test
             public override ControllerDescriptor ControllerDescriptor
             {
                 get { throw new NotImplementedException(); }
+            }
+
+            public override Task<object> ExecuteAsync(ControllerContext controllerContext, IDictionary<string, object> parameters)
+            {
+                throw new NotImplementedException();
             }
 
             public override IAsyncResult BeginExecute(ControllerContext controllerContext, IDictionary<string, object> parameters, AsyncCallback callback, object state)
