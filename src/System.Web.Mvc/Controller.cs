@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Security.Principal;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web.Mvc.Async;
 using System.Web.Mvc.Filters;
 using System.Web.Mvc.Properties;
@@ -18,7 +19,7 @@ using System.Web.WebPages;
 namespace System.Web.Mvc
 {
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Class complexity dictated by public surface area")]
-    public abstract class Controller : ControllerBase, IActionFilter, IAuthenticationFilter, IAuthorizationFilter, IDisposable, IExceptionFilter, IResultFilter, IAsyncController, IAsyncManagerContainer
+    public abstract class Controller : ControllerBase, IActionFilter, IAuthenticationFilter, IAuthorizationFilter, IDisposable, IExceptionFilter, IResultFilter, IAsyncController, IAsyncManagerContainer, ITaskAsyncController
     {
         private static readonly object _executeTag = new object();
         private static readonly object _executeCoreTag = new object();
@@ -831,55 +832,30 @@ namespace System.Web.Mvc
             };
         }
 
-        IAsyncResult IAsyncController.BeginExecute(RequestContext requestContext, AsyncCallback callback, object state)
-        {
-            return BeginExecute(requestContext, callback, state);
-        }
-
-        void IAsyncController.EndExecute(IAsyncResult asyncResult)
-        {
-            EndExecute(asyncResult);
-        }
-
-        protected virtual IAsyncResult BeginExecute(RequestContext requestContext, AsyncCallback callback, object state)
+        public virtual Task ExecuteAsync(RequestContext requestContext)
         {
             if (DisableAsyncSupport)
             {
                 // For backwards compat, we can disallow async support and just chain to the sync Execute() function.
-                Action action = () =>
-                {
-                    Execute(requestContext);
-                };
-
-                return AsyncResultWrapper.BeginSynchronous(callback, state, action, _executeTag);
+                Execute(requestContext);
+                return TaskEx.Completed;
             }
-            else
+
+            if (requestContext == null)
             {
-                if (requestContext == null)
-                {
-                    throw new ArgumentNullException("requestContext");
-                }
-
-                // Support Asynchronous behavior. 
-                // Execute/ExecuteCore are no longer called.
-
-                VerifyExecuteCalledOnce();
-                Initialize(requestContext);
-
-                // Ensure delegates continue to use the C# Compiler static delegate caching optimization.
-                BeginInvokeDelegate<Controller> beginDelegate = (AsyncCallback asyncCallback, object callbackState, Controller controller) =>
-                    {
-                        return controller.BeginExecuteCore(asyncCallback, callbackState);
-                    };
-                EndInvokeVoidDelegate<Controller> endDelegate = (IAsyncResult asyncResult, Controller controller) =>
-                    {
-                        controller.EndExecuteCore(asyncResult);
-                    };
-                return AsyncResultWrapper.Begin(callback, state, beginDelegate, endDelegate, this, _executeTag);
+                throw new ArgumentNullException("requestContext");
             }
+
+            // Support Asynchronous behavior. 
+            // Execute/ExecuteCore are no longer called.
+
+            VerifyExecuteCalledOnce();
+            Initialize(requestContext);
+
+            return ExecuteCoreAsync();
         }
 
-        protected virtual IAsyncResult BeginExecuteCore(AsyncCallback callback, object state)
+        protected virtual Task ExecuteCoreAsync()
         {
             // If code in this method needs to be updated, please also check the ExecuteCore() method
             // of Controller to see if that code also must be updated.
@@ -892,62 +868,72 @@ namespace System.Web.Mvc
                 if (asyncInvoker != null)
                 {
                     // asynchronous invocation
-                    // Ensure delegates continue to use the C# Compiler static delegate caching optimization.
-                    BeginInvokeDelegate<ExecuteCoreState> beginDelegate = delegate(AsyncCallback asyncCallback, object asyncState, ExecuteCoreState innerState)
-                    {
-                        return innerState.AsyncInvoker.BeginInvokeAction(innerState.Controller.ControllerContext, innerState.ActionName, asyncCallback, asyncState);
-                    };
-
-                    EndInvokeVoidDelegate<ExecuteCoreState> endDelegate = delegate(IAsyncResult asyncResult, ExecuteCoreState innerState)
-                    {
-                        if (!innerState.AsyncInvoker.EndInvokeAction(asyncResult))
-                        {
-                            innerState.Controller.HandleUnknownAction(innerState.ActionName);
-                        }
-                    };
-                    ExecuteCoreState executeState = new ExecuteCoreState() { Controller = this, AsyncInvoker = asyncInvoker, ActionName = actionName };
-
-                    return AsyncResultWrapper.Begin(callback, state, beginDelegate, endDelegate, executeState, _executeCoreTag);
+                    return CallAsyncInvokerInvokeActionAsync(asyncInvoker, actionName);
                 }
                 else
                 {
                     // synchronous invocation
-                    Action action = () =>
+                    if (!invoker.InvokeAction(ControllerContext, actionName))
                     {
-                        if (!invoker.InvokeAction(ControllerContext, actionName))
-                        {
-                            HandleUnknownAction(actionName);
-                        }
-                    };
-                    return AsyncResultWrapper.BeginSynchronous(callback, state, action, _executeCoreTag);
+                        HandleUnknownAction(actionName);
+                    }
+                    return TaskEx.Completed;
                 }
-            }
-            catch
-            {
-                PossiblySaveTempData();
-                throw;
-            }
-        }
-
-        protected virtual void EndExecute(IAsyncResult asyncResult)
-        {
-            AsyncResultWrapper.End(asyncResult, _executeTag);
-        }
-
-        protected virtual void EndExecuteCore(IAsyncResult asyncResult)
-        {
-            // If code in this method needs to be updated, please also check the ExecuteCore() method
-            // of Controller to see if that code also must be updated.
-
-            try
-            {
-                AsyncResultWrapper.End(asyncResult, _executeCoreTag);
             }
             finally
             {
                 PossiblySaveTempData();
             }
         }
+
+        private async Task CallAsyncInvokerInvokeActionAsync(IAsyncActionInvoker asyncInvoker, string actionName)
+        {
+            var actionWasCalled = await Task.Factory.FromAsync(asyncInvoker.BeginInvokeAction, asyncInvoker.EndInvokeAction, ControllerContext, actionName, null).ConfigureAwait(continueOnCapturedContext: true);
+            if (!actionWasCalled)
+            {
+                HandleUnknownAction(actionName);
+            }
+        }
+
+        #region Legacy APM Methods
+
+        [Obsolete]
+        IAsyncResult IAsyncController.BeginExecute(RequestContext requestContext, AsyncCallback callback, object state)
+        {
+            return BeginExecute(requestContext, callback, state);
+        }
+
+        [Obsolete]
+        void IAsyncController.EndExecute(IAsyncResult asyncResult)
+        {
+            EndExecute(asyncResult);
+        }
+
+        [Obsolete]
+        protected virtual IAsyncResult BeginExecute(RequestContext requestContext, AsyncCallback callback, object state)
+        {
+            return ApmWrapper.ToBegin(ExecuteAsync(requestContext), callback, state);
+        }
+
+        [Obsolete]
+        protected virtual IAsyncResult BeginExecuteCore(AsyncCallback callback, object state)
+        {
+            return ApmWrapper.ToBegin(ExecuteCoreAsync(), callback, state);
+        }
+
+        [Obsolete]
+        protected virtual void EndExecute(IAsyncResult asyncResult)
+        {
+            ApmWrapper.ToEnd(asyncResult);
+        }
+
+        [Obsolete]
+        protected virtual void EndExecuteCore(IAsyncResult asyncResult)
+        {
+            ApmWrapper.ToEnd(asyncResult);
+        }
+
+        #endregion
 
         #region IActionFilter Members
 
@@ -1008,13 +994,5 @@ namespace System.Web.Mvc
         }
 
         #endregion
-
-        // Keep as value type to avoid allocating
-        private struct ExecuteCoreState
-        {
-            internal IAsyncActionInvoker AsyncInvoker;
-            internal Controller Controller;
-            internal string ActionName;
-        }
     }
 }

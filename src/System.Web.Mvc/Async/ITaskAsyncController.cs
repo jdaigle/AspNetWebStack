@@ -2,11 +2,12 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Threading.Tasks;
+using System.Web.Routing;
 
 namespace System.Web.Mvc.Async
 {
-    public static class TaskEx
+    public interface ITaskAsyncController : IController
     {
-        public static readonly Task Completed = Task.FromResult(0);
+        Task ExecuteAsync(RequestContext requestContext);
     }
 }

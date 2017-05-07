@@ -73,11 +73,18 @@ namespace System.Web.Mvc
             IControllerFactory factory;
             ProcessRequestInit(httpContext, out controller, out factory);
 
+            ITaskAsyncController taskAsyncController = controller as ITaskAsyncController;
+            if (taskAsyncController != null)
+            {
+                // asynchronous Task controller
+                return AwaitAsyncControllerExecuteAsync(taskAsyncController, factory);
+            }
+
             IAsyncController asyncController = controller as IAsyncController;
             if (asyncController != null)
             {
-                // asynchronous controller
-                return CallAsyncControllerExecuteAsync(asyncController, factory);
+                // legacy asynchronous APM controller
+                return AwaitAsyncControllerExecuteAsync(asyncController, factory);
             }
             else
             {
@@ -94,7 +101,19 @@ namespace System.Web.Mvc
             }
         }
 
-        private async Task CallAsyncControllerExecuteAsync(IAsyncController controller, IControllerFactory factory)
+        private async Task AwaitAsyncControllerExecuteAsync(ITaskAsyncController controller, IControllerFactory factory)
+        {
+            try
+            {
+                await controller.ExecuteAsync(RequestContext).ConfigureAwait(continueOnCapturedContext: true);
+            }
+            finally
+            {
+                factory.ReleaseController(controller);
+            }
+        }
+
+        private async Task AwaitAsyncControllerExecuteAsync(IAsyncController controller, IControllerFactory factory)
         {
             try
             {

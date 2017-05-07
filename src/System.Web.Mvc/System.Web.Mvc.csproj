@@ -156,6 +156,7 @@
     <Compile Include="ActionNameSelector.cs" />
     <Compile Include="AreaReference.cs" />
     <Compile Include="Async\ApmWrapper.cs" />
+    <Compile Include="Async\ITaskAsyncController.cs" />
     <Compile Include="Async\TaskEx.cs" />
     <Compile Include="ControllerDescriptorExtensions.cs" />
     <Compile Include="Async\IAsyncActionInvokerFactory.cs" />
