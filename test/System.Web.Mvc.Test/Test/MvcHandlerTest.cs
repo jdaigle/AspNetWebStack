@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Threading.Tasks;
 using System.Web.Mvc.Async;
 using System.Web.Mvc.Async.Test;
 using System.Web.Routing;
@@ -214,18 +215,21 @@ namespace System.Web.Mvc.Test
 
             // Act & assert
             Assert.Throws<Exception>(
-                delegate { handler.BeginProcessRequest(handler.RequestContext.HttpContext, null, null); },
+                delegate { handler.ProcessRequestAsync(handler.RequestContext.HttpContext).GetAwaiter().GetResult(); },
                 @"Some exception text.");
 
             mockController.Verify();
         }
 
         [Fact]
-        public void ProcessRequestAsync_AsyncController_NormalExecution()
+        public async Task ProcessRequestAsync_AsyncController_NormalExecution()
         {
             // Arrange
             using (MockAsyncResult innerAsyncResult = new MockAsyncResult())
             {
+                innerAsyncResult.CompletedSynchronously = true;
+                innerAsyncResult.IsCompleted = true;
+
                 bool disposeWasCalled = false;
 
                 Mock<IAsyncController> mockController = new Mock<IAsyncController>();
@@ -235,17 +239,14 @@ namespace System.Web.Mvc.Test
                 MvcHandler handler = GetMvcHandler(mockController.Object);
 
                 // Act & assert
-                IAsyncResult outerAsyncResult = handler.BeginProcessRequest(handler.RequestContext.HttpContext, null, null);
-                Assert.False(disposeWasCalled);
-
-                handler.EndProcessRequest(outerAsyncResult);
+                await handler.ProcessRequestAsync(handler.RequestContext.HttpContext);
                 Assert.True(disposeWasCalled);
                 mockController.Verify(o => o.EndExecute(innerAsyncResult), Times.AtMostOnce());
             }
         }
 
         [Fact]
-        public void ProcessRequestAsync_SyncController_NormalExecution()
+        public async Task ProcessRequestAsync_SyncController_NormalExecution()
         {
             // Arrange
             bool executeWasCalled = false;
@@ -258,18 +259,14 @@ namespace System.Web.Mvc.Test
             MvcHandler handler = GetMvcHandler(mockController.Object);
 
             // Act & assert
-            IAsyncResult outerAsyncResult = handler.BeginProcessRequest(handler.RequestContext.HttpContext, null, null);
-            Assert.False(executeWasCalled);
-            Assert.False(disposeWasCalled);
-
-            handler.EndProcessRequest(outerAsyncResult);
+            await handler.ProcessRequestAsync(handler.RequestContext.HttpContext);
             Assert.True(executeWasCalled);
             Assert.True(disposeWasCalled);
         }
 
         // Test that execute is called on a  user controller that derives from Controller
         [Fact]
-        public void ProcessRequestAsync_SyncController_NormalExecution2()
+        public async Task ProcessRequestAsync_SyncController_NormalExecution2()
         {
             // Arrange
             MyCustomerController controller = new MyCustomerController();
@@ -278,8 +275,7 @@ namespace System.Web.Mvc.Test
             handler.RequestContext.RouteData.Values["action"] = "Widget";
 
             // Act
-            IAsyncResult outerAsyncResult = handler.BeginProcessRequest(handler.RequestContext.HttpContext, null, null);
-            handler.EndProcessRequest(outerAsyncResult);
+            await handler.ProcessRequestAsync(handler.RequestContext.HttpContext);
 
             // Assert
             Assert.Equal(1, controller.Called);

@@ -198,6 +198,20 @@ namespace System.Web.Mvc
             rvd.RemoveFromDictionary((entry) => entry.Value == UrlParameter.Optional);
         }
 
+        #region IHttpAsyncHandler Members (for tests)
+
+        public IAsyncResult BeginProcessRequest(HttpContext context, AsyncCallback cb, object extraData)
+        {
+            return ((IHttpAsyncHandler)this).BeginProcessRequest(context, cb, extraData);
+        }
+
+        public void EndProcessRequest(IAsyncResult result)
+        {
+            ((IHttpAsyncHandler)this).EndProcessRequest(result);
+        }
+
+        #endregion
+
         #region IHttpHandler Members
 
         bool IHttpHandler.IsReusable
