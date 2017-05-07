@@ -1,6 +1,7 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Threading.Tasks;
 using System.Web.Mvc.Async;
 using System.Web.Routing;
 using System.Web.SessionState;
@@ -11,46 +12,50 @@ namespace System.Web.Mvc
     {
         private static readonly object _processRequestTag = new object();
 
-        protected virtual IAsyncResult BeginProcessRequest(HttpContext httpContext, AsyncCallback callback, object state)
+        protected virtual Task ProcessRequestAsync(HttpContext httpContext)
         {
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException("httpContext");
+            }
+
             HttpContextBase httpContextBase = new HttpContextWrapper(httpContext);
-            return BeginProcessRequest(httpContextBase, callback, state);
+            return ProcessRequestAsync(httpContextBase);
         }
 
-        protected internal virtual IAsyncResult BeginProcessRequest(HttpContextBase httpContext, AsyncCallback callback, object state)
+        protected virtual Task ProcessRequestAsync(HttpContextBase httpContext)
         {
-            IHttpHandler httpHandler = GetHttpHandler(httpContext);
-            IHttpAsyncHandler httpAsyncHandler = httpHandler as IHttpAsyncHandler;
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException("httpContext");
+            }
 
+            IHttpHandler httpHandler = GetHttpHandler(httpContext);
+
+            MvcHandler mvcHandler = httpHandler as MvcHandler;
+            if (mvcHandler != null)
+            {
+                return mvcHandler.ProcessRequestAsync(httpContext);
+            }
+
+            HttpTaskAsyncHandler httpTaskAsyncHander = httpHandler as HttpTaskAsyncHandler;
+            if (httpTaskAsyncHander != null)
+            {
+                return httpTaskAsyncHander.ProcessRequestAsync(HttpContext.Current);
+            }
+
+            IHttpAsyncHandler httpAsyncHandler = httpHandler as IHttpAsyncHandler;
             if (httpAsyncHandler != null)
             {
                 // asynchronous handler
-
-                // Ensure delegates continue to use the C# Compiler static delegate caching optimization.
-                BeginInvokeDelegate<IHttpAsyncHandler> beginDelegate = delegate(AsyncCallback asyncCallback, object asyncState, IHttpAsyncHandler innerHandler)
-                {
-                    return innerHandler.BeginProcessRequest(HttpContext.Current, asyncCallback, asyncState);
-                };
-                EndInvokeVoidDelegate<IHttpAsyncHandler> endDelegate = delegate(IAsyncResult asyncResult, IHttpAsyncHandler innerHandler)
-                {
-                    innerHandler.EndProcessRequest(asyncResult);
-                };
-                return AsyncResultWrapper.Begin(callback, state, beginDelegate, endDelegate, httpAsyncHandler, _processRequestTag);
+                return Task.Factory.FromAsync(httpAsyncHandler.BeginProcessRequest, httpAsyncHandler.EndProcessRequest, HttpContext.Current, null);
             }
             else
             {
                 // synchronous handler
-                Action action = delegate
-                {
-                    httpHandler.ProcessRequest(HttpContext.Current);
-                };
-                return AsyncResultWrapper.BeginSynchronous(callback, state, action, _processRequestTag);
+                httpHandler.ProcessRequest(HttpContext.Current);
+                return TaskEx.Completed;
             }
-        }
-
-        protected internal virtual void EndProcessRequest(IAsyncResult asyncResult)
-        {
-            AsyncResultWrapper.End(asyncResult, _processRequestTag);
         }
 
         private static IHttpHandler GetHttpHandler(HttpContextBase httpContext)
@@ -75,12 +80,12 @@ namespace System.Web.Mvc
 
         IAsyncResult IHttpAsyncHandler.BeginProcessRequest(HttpContext context, AsyncCallback cb, object extraData)
         {
-            return BeginProcessRequest(context, cb, extraData);
+            return ApmWrapper.ToBegin(ProcessRequestAsync(context), cb, extraData);
         }
 
         void IHttpAsyncHandler.EndProcessRequest(IAsyncResult result)
         {
-            EndProcessRequest(result);
+            ApmWrapper.ToEnd(result);
         }
 
         #endregion

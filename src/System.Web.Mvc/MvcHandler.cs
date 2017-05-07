@@ -3,9 +3,8 @@
 
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Web.Mvc.Async;
 using System.Web.Mvc.Properties;
 using System.Web.Routing;
@@ -14,7 +13,7 @@ using Microsoft.Web.Infrastructure.DynamicValidationHelper;
 
 namespace System.Web.Mvc
 {
-    public class MvcHandler : IHttpAsyncHandler, IHttpHandler, IRequiresSessionState
+    public class MvcHandler : HttpTaskAsyncHandler, IHttpAsyncHandler, IHttpHandler, IRequiresSessionState
     {
         private static readonly object _processRequestTag = new object();
 
@@ -47,7 +46,7 @@ namespace System.Web.Mvc
 
         public static bool DisableMvcResponseHeader { get; set; }
 
-        protected virtual bool IsReusable
+        public override bool IsReusable
         {
             get { return false; }
         }
@@ -62,13 +61,13 @@ namespace System.Web.Mvc
             }
         }
 
-        protected virtual IAsyncResult BeginProcessRequest(HttpContext httpContext, AsyncCallback callback, object state)
+        public override Task ProcessRequestAsync(HttpContext httpContext)
         {
             HttpContextBase httpContextBase = new HttpContextWrapper(httpContext);
-            return BeginProcessRequest(httpContextBase, callback, state);
+            return ProcessRequestAsync(httpContextBase);
         }
 
-        protected internal virtual IAsyncResult BeginProcessRequest(HttpContextBase httpContext, AsyncCallback callback, object state)
+        public Task ProcessRequestAsync(HttpContextBase httpContext)
         {
             IController controller;
             IControllerFactory factory;
@@ -78,62 +77,33 @@ namespace System.Web.Mvc
             if (asyncController != null)
             {
                 // asynchronous controller
-
-                // Ensure delegates continue to use the C# Compiler static delegate caching optimization.
-                BeginInvokeDelegate<ProcessRequestState> beginDelegate = delegate(AsyncCallback asyncCallback, object asyncState, ProcessRequestState innerState)
-                {
-                    try
-                    {
-                        return innerState.AsyncController.BeginExecute(innerState.RequestContext, asyncCallback, asyncState);
-                    }
-                    catch
-                    {
-                        innerState.ReleaseController();
-                        throw;
-                    }
-                };
-
-                EndInvokeVoidDelegate<ProcessRequestState> endDelegate = delegate(IAsyncResult asyncResult, ProcessRequestState innerState)
-                {
-                    try
-                    {
-                        innerState.AsyncController.EndExecute(asyncResult);
-                    }
-                    finally
-                    {
-                        innerState.ReleaseController();
-                    }
-                };
-                ProcessRequestState outerState = new ProcessRequestState() 
-                {
-                    AsyncController = asyncController, Factory = factory, RequestContext = RequestContext
-                };
-                
-                SynchronizationContext callbackSyncContext = SynchronizationContextUtil.GetSynchronizationContext();
-                return AsyncResultWrapper.Begin(callback, state, beginDelegate, endDelegate, outerState, _processRequestTag, callbackSyncContext: callbackSyncContext);
+                return CallAsyncControllerExecuteAsync(asyncController, factory);
             }
             else
             {
                 // synchronous controller
-                Action action = delegate
+                try
                 {
-                    try
-                    {
-                        controller.Execute(RequestContext);
-                    }
-                    finally
-                    {
-                        factory.ReleaseController(controller);
-                    }
-                };
-
-                return AsyncResultWrapper.BeginSynchronous(callback, state, action, _processRequestTag);
+                    controller.Execute(RequestContext);
+                }
+                finally
+                {
+                    factory.ReleaseController(controller);
+                }
+                return TaskEx.Completed;
             }
         }
 
-        protected internal virtual void EndProcessRequest(IAsyncResult asyncResult)
+        private async Task CallAsyncControllerExecuteAsync(IAsyncController controller, IControllerFactory factory)
         {
-            AsyncResultWrapper.End(asyncResult, _processRequestTag);
+            try
+            {
+                await Task.Factory.FromAsync(controller.BeginExecute, controller.EndExecute, RequestContext, null).ConfigureAwait(continueOnCapturedContext: true);
+            }
+            finally
+            {
+                factory.ReleaseController(controller);
+            }
         }
 
         private static string GetMvcVersionString()
@@ -144,7 +114,7 @@ namespace System.Web.Mvc
             return new AssemblyName(typeof(MvcHandler).Assembly.FullName).Version.ToString(2);
         }
 
-        protected virtual void ProcessRequest(HttpContext httpContext)
+        public override void ProcessRequest(HttpContext httpContext)
         {
             HttpContextBase httpContextBase = new HttpContextWrapper(httpContext);
             ProcessRequest(httpContextBase);
@@ -222,32 +192,5 @@ namespace System.Web.Mvc
         }
 
         #endregion
-
-        #region IHttpAsyncHandler Members
-
-        IAsyncResult IHttpAsyncHandler.BeginProcessRequest(HttpContext context, AsyncCallback cb, object extraData)
-        {
-            return BeginProcessRequest(context, cb, extraData);
-        }
-
-        void IHttpAsyncHandler.EndProcessRequest(IAsyncResult result)
-        {
-            EndProcessRequest(result);
-        }
-
-        #endregion
-
-        // Keep as value type to avoid allocating
-        private struct ProcessRequestState
-        {
-            internal IAsyncController AsyncController;
-            internal IControllerFactory Factory;
-            internal RequestContext RequestContext;
-
-            internal void ReleaseController()
-            {
-                Factory.ReleaseController(AsyncController);
-            }
-        }
     }
 }
